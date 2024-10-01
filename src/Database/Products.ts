@@ -1,3 +1,4 @@
+import { CurrencyMethods } from "./Currency";
 import { askQuery, updateQuery } from "./database";
 
 export interface ProductsObject {
@@ -20,8 +21,9 @@ export interface CategoryObject{
 }
 
 interface CategoriesAndProducts{
-  products: ProductsObject[]
+  products: ProductsObject[],
   categories: CategoryObject[],
+  dolar: number
 }
 
 
@@ -34,6 +36,10 @@ class Products {
     catch(e){
       console.log(e.message);
     }
+  }
+
+  public addCategory(name: string) {
+    updateQuery(`INSERT INTO category (name) VALUES ("${name.toLowerCase()}")`)
   }
   
   public async getProducts(): Promise<ProductsObject[]> {
@@ -88,8 +94,9 @@ class Products {
   public async getProductsAndCategories(): Promise<CategoriesAndProducts> {
     let products = await this.getProducts();
     let categories = await this.getCategories();
+    let dolar = await CurrencyMethods.getDolar();
 
-    return {products, categories}
+    return {products, categories, dolar}
   }
 }
 

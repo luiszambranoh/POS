@@ -1,101 +1,137 @@
-import * as React from 'react';
-import { CssVarsProvider } from '@mui/joy/styles';
-import CssBaseline from '@mui/joy/CssBaseline';
+
+
 import Box from '@mui/joy/Box';
 import Button from '@mui/joy/Button';
 
+
+import FormControl from '@mui/joy/FormControl';
+import FormLabel from '@mui/joy/FormLabel';
+
+import Input from '@mui/joy/Input';
+
+import Table from '@mui/joy/Table';
+import Sheet from '@mui/joy/Sheet';
+
 import Typography from '@mui/joy/Typography';
 
-import DownloadRoundedIcon from '@mui/icons-material/DownloadRounded';
+import SearchIcon from '@mui/icons-material/Search';
 
-import { useState } from 'react';
-import { Modal, DialogContent, DialogTitle, FormControl, FormLabel, Input, ModalDialog, Stack } from '@mui/joy';
-import Header from '../Header';
-import Sidebar from '../Sidebar';
 
-export default function Sale() {
+import Autocomplete from '@mui/joy/Autocomplete';
+import { CategoryObject, ProductsMethods, ProductsObject } from '../../Database/Products';
+import React, { useState } from 'react';
+import { Modal, ModalDialog, Stack } from '@mui/joy';
+import { CurrencyMethods } from '../../Database/Currency';
+import { AttachMoney } from '@mui/icons-material';
+import { Icon } from '@mui/material';
+
+type Props = {
+  products: ProductsObject[],
+  categories: CategoryObject[],
+  dolar: number
+}
+
+
+
+export default function InventoryTable({products, dolar}: Props) {
   const [openCreateProduct, setProductCreation] = useState(false);
 
   return (
-    <CssVarsProvider disableTransitionOnChange>
-      <CssBaseline />
+    <React.Fragment>
+      
+      <Box
+        className="SearchAndFilters-tabletUp"
+        sx={{
+          borderRadius: 'sm',
+          py: 2,
+          display: { xs: 'none', sm: 'flex' },
+          flexWrap: 'wrap',
+          gap: 1.5,
+          '& > *': {
+            minWidth: { xs: '120px', md: '160px' },
+          },
+        }}
+      >
+
+        <FormControl sx={{ flex: 1 }} size="sm">
+          <FormLabel>Buscar Producto</FormLabel>
+          <Input size="lg" placeholder="Buscar producto" startDecorator={<SearchIcon />} />
+        </FormControl>
+      </Box>
+      {/* TABLE */}
+
+      <Sheet
+        className="OrderTableContainer"
+        variant="outlined"
+        sx={{
+          display: { xs: 'none', sm: 'initial' },
+          width: '100%',
+          borderRadius: 'sm',
+          flexShrink: 1,
+          overflow: 'auto',
+          minHeight: 0,
+        }}
+      >
+
+        <Table
+          aria-labelledby="tableTitle"
+          stickyHeader
+          borderAxis="bothBetween"
+          sx={{
+            '--TableCell-headBackground': 'var(--joy-palette-background-level1)',
+            '--Table-headerUnderlineThickness': '1px',
+            '--Tableproducts-hoverBackground': 'var(--joy-palette-background-level1)',
+            '--TableCell-paddingY': '4px',
+            '--TableCell-paddingX': '8px',
+          }}
+          size="lg"
+        >
+          <thead>
+            <tr>
+              <th style={{ width: '20%', padding: '12px 6px' }}>Codigo</th>
+              <th style={{ width: '20%', padding: '12px 6px' }}>Nombre</th>
+              <th style={{ width: '20%', padding: '12px 6px' }}>Precio Base</th>
+              <th style={{ width: '20%', padding: '12px 6px' }}>Precio Al Cambio</th>
+              <th style={{ width: "20%", padding: '12px 6px' }}>Acciones</th>
+            </tr>
+          </thead>
+          <tbody>
+            {products ? products.map((products) => (
+              <tr key={products.id}>
+                <td>
+                  <Typography level="body-lg">{products.id}</Typography>
+                </td>
+                <td>
+                  <Typography level="body-lg">{products.name}</Typography>
+                </td>
+                <td>
+                {products.currency.name} {products.price} 
+                </td>
+                <td >
+                  {CurrencyMethods.convertCurrency(products.currency.id, dolar, products.price).convertionId == 1 ? <div><AttachMoney/> {CurrencyMethods.convertCurrency(products.currency.id, dolar, products.price).convertion} </div> : <div> Bs.D {CurrencyMethods.convertCurrency(products.currency.id, dolar, products.price).convertion} </div>
+                  } 
+                </td>
+
+                <td>
+                  <Stack direction={'row'} sx={{ display: 'flex', gap: 1 }}>
+                    <Button size="md"  onClick={() => {
+                        setProductCreation(true)
+                      }
+                    }>
+                      Modificar
+                    </Button>
+                  </Stack>
+                </td>
+              </tr>
+            )) : null}
+          </tbody>
+        </Table>
+      </Sheet>
+
       
 
-      <Box sx={{ display: 'flex', minHeight: '100dvh' }}>
-        <Header/>
-        <Sidebar/>
-        <Box
-          component="main"
-          className="MainContent"
-          sx={{
-            px: { xs: 2, md: 6 },
-            pt: {
-              xs: 'calc(12px + var(--Header-height))',
-              sm: 'calc(12px + var(--Header-height))',
-              md: 3,
-            },
-            pb: { xs: 2, sm: 2, md: 3 },
-            flex: 1,
-            display: 'flex',
-            flexDirection: 'column',
-            minWidth: 0,
-            height: '100dvh',
-            gap: 1,
-          }}
-        >
+      
 
-          <Box
-            sx={{
-              display: 'flex',
-              mb: 1,
-              gap: 1,
-              flexDirection: { xs: 'column', sm: 'row' },
-              alignItems: { xs: 'start', sm: 'center' },
-              flexWrap: 'wrap',
-              justifyContent: 'space-between',
-            }}
-          >
-            <Typography level="h2" component="h1">
-              Inventario
-            </Typography>
-            <Button
-              color="success"
-              startDecorator={<DownloadRoundedIcon />}
-              size="sm"
-            >
-              Descargar En Excel
-            </Button>
-          </Box>
-
-          <Button onClick={() => setProductCreation(true)}>hola</Button>
-
-          <Modal open={openCreateProduct} onClose={() => setProductCreation(false)}>
-        <ModalDialog>
-          <DialogTitle>Create new project</DialogTitle>
-          <DialogContent>Fill in the information of the project.</DialogContent>
-          <form
-            onSubmit={(event: React.FormEvent<HTMLFormElement>) => {
-              event.preventDefault();
-              setProductCreation(false);
-            }}
-          >
-            <Stack spacing={2}>
-              <FormControl>
-                <FormLabel>Name</FormLabel>
-                <Input autoFocus required />
-              </FormControl>
-              <FormControl>
-                <FormLabel>Description</FormLabel>
-                <Input required />
-              </FormControl>
-              <Button type="submit">Submit</Button>
-            </Stack>
-          </form>
-        </ModalDialog>
-      </Modal>
-
-        </Box>
-      </Box>
-    </CssVarsProvider>
+    </React.Fragment>
   );
 }

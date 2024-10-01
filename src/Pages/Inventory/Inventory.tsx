@@ -14,44 +14,48 @@ import OrderTable from './TableInventory';
 import Header from '../Header';
 import { useState } from 'react';
 import { Modal, DialogTitle, FormLabel, Input, ModalDialog, Stack, Select, Option} from '@mui/joy';
-import { SubmitHandler, useForm } from 'react-hook-form';
+import { Controller, SubmitHandler, useForm } from 'react-hook-form';
 import { CategoryObject, ProductsMethods, ProductsObject } from '../../Database/Products';
 import { Autocomplete } from '@mui/material';
+import { formatInput, formatToTwoDecimals } from '../../Database/Utils';
 
 type productsInput = {
   id: number,
   name: string,
-  price: number,
+  price: string,
   currency: number,
   category: number
 }
 
-let categories: CategoryObject[], products: ProductsObject[] = null;
+let categories: CategoryObject[], products: ProductsObject[] = null, dolar: number;
 
 export default function Inventory() {
   const [openCreateProduct, setProductCreation] = useState(false);
-  const [productStatus, setProductStatus] = useState(false);
+  const [productPrice, setProductPrice] = useState<string>('0.00');
+  const [re, setRe] = useState(false);
+
 
   React.useEffect(() => {
     async function getData(){
       const data = await ProductsMethods.getProductsAndCategories();
       products = data.products;
       categories = data.categories;
-      setProductStatus(true);
+      dolar = data.dolar;
+      setRe(true);
     }
     getData();
   }, [])
-
+  
   const {
     register,
     handleSubmit,
-    formState: {errors}
+    control
   } = useForm<productsInput>();
 
   const onSubmitProduct: SubmitHandler<productsInput> = (data) => {
-    console.log(data)
-    ProductsMethods.addProduct(data.id, data.name, data.price, data.currency, 1)
-    // location.reload();
+    
+    ProductsMethods.addProduct(data.id, data.name.toLocaleLowerCase(), formatToTwoDecimals(data.price), data.currency, 1)
+    location.reload();
   }
   
 
@@ -59,7 +63,6 @@ export default function Inventory() {
   return (
     <CssVarsProvider disableTransitionOnChange>
       <CssBaseline />
-      
       <Box sx={{ display: 'flex', minHeight: '100dvh' }}>
         <Header />
         <Sidebar />
@@ -106,12 +109,12 @@ export default function Inventory() {
               Descargar En Excel
             </Button>
           </Box>
+          <Stack gap={5} direction={'row'}>
+            <Button color='success' size='lg'  onClick={() => setProductCreation(true)}>Agregar Producto</Button>
+            <Button color='success' size='lg'  onClick={() => setProductCreation(true)}>Agregar Categoria</Button>
+          </Stack>
 
-          <Button  onClick={() => setProductCreation(true)}>hola</Button>
-
-          
-
-          <OrderTable products={products} categories={categories} />
+          <OrderTable products={products} categories={categories} dolar={dolar} />
         </Box>
 
         <Modal open={openCreateProduct} onClose={() => setProductCreation(false)}>
@@ -132,7 +135,22 @@ export default function Inventory() {
               <div>
                 <FormLabel>Precio</FormLabel>
                 <Stack direction={'row'} gap={3}>
-                  <Input {...register("price")}/>
+                <Controller
+          name="price"
+          control={control}
+          defaultValue={'0.00'}
+          render={({ field }) => (
+            <Input
+              {...field}
+              value={productPrice} // Set the value to your productPrice state
+              onChange={(value) => {
+                let input = formatInput(value.target.value)
+                setProductPrice(input); // Update the local state
+                field.onChange(input); // Notify React Hook Form about the change
+              }}
+            />
+          )}
+        />
                   <Select {...register("currency")} placeholder="Moneda">
                     <Option value={1}>$ - Dolar Americano</Option>
                     <Option value={0}>Bs.D - Bolivar Digital</Option>
@@ -153,8 +171,8 @@ export default function Inventory() {
             </Stack>
           </form>
         </ModalDialog>
-
     </Modal>
+
       </Box>
     </CssVarsProvider>
   );

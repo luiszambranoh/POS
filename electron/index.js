@@ -36,6 +36,7 @@ ipcMain.handle('update-query', async (event, query) => {
         }
       });
     });
+    console.log(`Query executed: ${query}`);
     database.close();
   } catch (e) {
     console.log(e)

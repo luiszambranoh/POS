@@ -32,7 +32,11 @@ import KeyboardArrowDownIcon from '@mui/icons-material/KeyboardArrowDown';
 
 import { closeSidebar } from './utils';
 import { useNavigate } from 'react-router-dom';
-import { ShoppingCart, ShoppingCartOutlined } from '@mui/icons-material';
+import { AttachMoney, Money, ShoppingCart, ShoppingCartOutlined } from '@mui/icons-material';
+import { DialogTitle, FormLabel, Modal, ModalDialog } from '@mui/joy';
+import { CurrencyMethods } from '../Database/Currency';
+import { formatInput, formatToTwoDecimals } from '../Database/Utils';
+import { useForm } from 'react-hook-form';
 
 function Toggler({
   defaultExpanded = false,
@@ -68,8 +72,24 @@ function Toggler({
   );
 }
 
+
 export default function Sidebar() {
   const navigate = useNavigate();
+  const [dolarPrice, setDolarPrice] = React.useState(null); 
+  const [dolarValue, setDolarValue] = React.useState('1.00');
+  const [bolivarValue, setBolivarValue] = React.useState('1.00');
+
+  const [newCurrency, setNewCurrency] = React.useState('0.00');
+  const [openCreateProduct, setProductCreation] = React.useState(false);
+
+  React.useEffect(() => {
+    async function getDolar(){
+      let dolar = await CurrencyMethods.getDolar();
+      setDolarPrice(dolar);
+      setBolivarValue(dolar.toFixed(2));
+    }
+    getDolar();
+  },[])
 
   return (
     <Sheet
@@ -173,9 +193,78 @@ export default function Sidebar() {
             </ListItemButton>
           </ListItem>
 
+          <Card sx={{
+            marginTop: 10
+          }}>
+              <div>
+                <FormLabel>Dólares</FormLabel>
+                <Input
+                  value={dolarValue}
+                  startDecorator={<AttachMoney/>}
+                  onChange={(e) => {
+                    let input = formatInput(e.target.value)
+                    setDolarValue(`${input}`);
+                    let newBolivar = formatToTwoDecimals(input) * formatToTwoDecimals(dolarPrice);
+                    setBolivarValue((newBolivar).toFixed(2))
+                  }}
+                  placeholder="Placeholder"
+                />
+              </div>
+              <div>
+                <FormLabel>Bolivares Digitales</FormLabel>
+                <Input
+                  value={bolivarValue}
+                  startDecorator={'Bs.D'}
+                  onChange={(e) => {
+                    let input = formatInput(e.target.value)
+                    setBolivarValue(`${input}`);
+                    let newDolar = formatToTwoDecimals(input) / formatToTwoDecimals(dolarPrice);
+                    console.log(newDolar)
+                    setDolarValue((newDolar).toFixed(2))
+                  }}
+                />
+              </div>
+
+              
+              <Button color='success' onClick={() => setProductCreation(true)}>
+                Cambiar Tasa de Cambio
+              </Button>
+          </Card>
+
           
         </List>
+        
       </Box>
+      <Modal open={openCreateProduct} onClose={() => setProductCreation(false)}>
+        <ModalDialog>
+          <DialogTitle>Cambiar Tasa</DialogTitle>
+          <form
+            onSubmit={(e) => {
+              e.preventDefault();
+              CurrencyMethods.changeDolar(formatToTwoDecimals(newCurrency))
+              location.reload();
+            }}
+          >
+            <Stack spacing={2}>
+              <div>
+                <FormLabel>Tasa</FormLabel>
+                <Input
+                  value={newCurrency}
+                  startDecorator={'Bs.D'}
+                  onChange={(e) => {
+                    console.log(e.target.value)
+                    let input = formatInput(e.target.value)
+                    console.log(input)
+                    setNewCurrency(`${input}`);
+                  }}
+                />
+              </div>
+              <Button color='success' type='submit'>Cambiar Tasa</Button>
+            </Stack>
+          </form>
+        </ModalDialog>
+    </Modal>
     </Sheet>
+    
   );
 }

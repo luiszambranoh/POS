@@ -20,17 +20,25 @@ import SearchIcon from '@mui/icons-material/Search';
 import Autocomplete from '@mui/joy/Autocomplete';
 import { CategoryObject, ProductsMethods, ProductsObject } from '../../Database/Products';
 import React, { useState } from 'react';
+import { Modal, ModalDialog, Stack } from '@mui/joy';
+import { CurrencyMethods } from '../../Database/Currency';
+import { AttachMoney } from '@mui/icons-material';
+import { Icon } from '@mui/material';
 
 type Props = {
   products: ProductsObject[],
-  categories: CategoryObject[]
+  categories: CategoryObject[],
+  dolar: number
 }
 
-export default function InventoryTable({products}: Props) {
+
+
+export default function InventoryTable({products, dolar}: Props) {
+  const [openCreateProduct, setProductCreation] = useState(false);
 
   return (
     <React.Fragment>
-
+      
       <Box
         className="SearchAndFilters-tabletUp"
         sx={{
@@ -47,12 +55,7 @@ export default function InventoryTable({products}: Props) {
 
         <FormControl sx={{ flex: 1 }} size="sm">
           <FormLabel>Buscar Producto</FormLabel>
-          <Input size="sm" placeholder="Search" startDecorator={<SearchIcon />} />
-        </FormControl>
-
-        <FormControl>
-          <FormLabel>Seleccionar Categoria</FormLabel>
-          <Autocomplete options={['Option 1', 'Option 2']} />
+          <Input size="lg" placeholder="Buscar producto" startDecorator={<SearchIcon />} />
         </FormControl>
       </Box>
       {/* TABLE */}
@@ -73,7 +76,6 @@ export default function InventoryTable({products}: Props) {
         <Table
           aria-labelledby="tableTitle"
           stickyHeader
-          hoverproducts
           borderAxis="bothBetween"
           sx={{
             '--TableCell-headBackground': 'var(--joy-palette-background-level1)',
@@ -87,8 +89,9 @@ export default function InventoryTable({products}: Props) {
           <thead>
             <tr>
               <th style={{ width: '20%', padding: '12px 6px' }}>Codigo</th>
-              <th style={{ width: '20%', padding: '12px 6px' }}>Precio Bs.</th>
-              <th style={{ width: '20%', padding: '12px 6px' }}>Precio $</th>
+              <th style={{ width: '20%', padding: '12px 6px' }}>Nombre</th>
+              <th style={{ width: '20%', padding: '12px 6px' }}>Precio Base</th>
+              <th style={{ width: '20%', padding: '12px 6px' }}>Precio Al Cambio</th>
               <th style={{ width: "20%", padding: '12px 6px' }}>Acciones</th>
             </tr>
           </thead>
@@ -101,24 +104,33 @@ export default function InventoryTable({products}: Props) {
                 <td>
                   <Typography level="body-lg">{products.name}</Typography>
                 </td>
-                <td className='PRECIO $'>
-                  {products.currency.name}
+                <td>
+                {products.currency.name} {products.price} 
+                </td>
+                <td >
+                  {CurrencyMethods.convertCurrency(products.currency.id, dolar, products.price).convertionId == 1 ? <div><AttachMoney/> {CurrencyMethods.convertCurrency(products.currency.id, dolar, products.price).convertion} </div> : <div> Bs.D {CurrencyMethods.convertCurrency(products.currency.id, dolar, products.price).convertion} </div>
+                  } 
                 </td>
 
                 <td>
-                  <Box sx={{ display: 'flex', gap: 1 }}>
-                    <Button size="md"  onClick={
-                      () => {console.log(products.id)}
-                      }>
+                  <Stack direction={'row'} sx={{ display: 'flex', gap: 1 }}>
+                    <Button size="md"  onClick={() => {
+                        setProductCreation(true)
+                      }
+                    }>
                       Modificar
                     </Button>
-                  </Box>
+                  </Stack>
                 </td>
               </tr>
             )) : null}
           </tbody>
         </Table>
       </Sheet>
+
+      
+
+      
 
     </React.Fragment>
   );

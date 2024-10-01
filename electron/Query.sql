@@ -30,5 +30,7 @@ CREATE TABLE IF NOT EXISTS category (
     name TEXT
 );
 
-INSERT INTO category (name) VALUES ("elpepe`");
-INSERT INTO category (name) VALUES ("elpepe");
+CREATE TABLE IF NOT EXISTS dolarPrice (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    price REAL
+);
