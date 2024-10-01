@@ -4,10 +4,11 @@ import './index.css';
 import Inventory from "./Pages/Inventory/Inventory";
 import { createHashRouter, RouterProvider } from "react-router-dom";
 import Sale from "./Pages/Sale/Sale";
+import Home from "./Pages/Home/Home";
 
 const router = createHashRouter([
   {
-    path: "/",
+    path: "/inventory",
     element: <Inventory/>
   },
   {
@@ -15,8 +16,8 @@ const router = createHashRouter([
     element: <Sale/>
   },
   {
-    path: "/sale",
-    element: <div>si</div>
+    path: "/",
+    element: <Home/>
   }
 ])
 

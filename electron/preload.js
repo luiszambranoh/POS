@@ -11,7 +11,7 @@ contextBridge.exposeInMainWorld('api', {
       console.log(result)
       return result;
     } catch (e) {
-      throw new Error('Error updating query');
+      throw new Error(e);
     }
   },
   askQuery: async (query) => {

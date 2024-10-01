@@ -10,7 +10,7 @@ export const askQuery = async (query: string) => {
   
 }
 export const updateQuery = (query: string) => {
-  try{
+  try {
     window.api.updateQuery(query);
   } catch(e){
     console.error(e)

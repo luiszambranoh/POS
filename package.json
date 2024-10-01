@@ -5,7 +5,11 @@
   "scripts": {
     "e": "electron .",
     "w": "webpack --watch",
-    "dev": "webpack && electron ."
+    "dev": "webpack && electron .",
+    "build": "electron-builder --win --ia32",
+    "start": "electron-forge start",
+    "package": "electron-forge package",
+    "make": "electron-forge make --platform=win32 --arch=ia32"
   },
   "keywords": [],
   "author": "",
@@ -19,20 +23,28 @@
     "@mui/material": "^6.1.1",
     "@mui/styled-engine-sc": "^6.1.1",
     "@mui/x-data-grid": "^7.18.0",
-    "consulta-dolar-venezuela": "^1.1.0",
-    "express": "^4.19.2",
+    "electron-squirrel-startup": "^1.0.1",
     "react": "^18.3.1",
     "react-dom": "^18.3.1",
+    "react-hook-form": "^7.53.0",
+    "react-router-dom": "^6.23.1",
     "sqlite3": "^5.1.7",
-    "styled-components": "^6.1.13",
-    "react-router-dom": "^6.23.1"
+    "styled-components": "^6.1.13"
   },
   "devDependencies": {
+    "@electron-forge/cli": "^7.5.0",
+    "@electron-forge/maker-deb": "^7.5.0",
+    "@electron-forge/maker-rpm": "^7.5.0",
+    "@electron-forge/maker-squirrel": "^7.5.0",
+    "@electron-forge/maker-zip": "^7.5.0",
+    "@electron-forge/plugin-auto-unpack-natives": "^7.5.0",
+    "@electron-forge/plugin-fuses": "^7.5.0",
+    "@electron/fuses": "^1.8.0",
     "@types/react": "^18.3.3",
     "@types/react-dom": "^18.3.0",
     "autoprefixer": "^10.4.20",
     "css-loader": "^7.1.2",
-    "electron": "^30.0.8",
+    "electron": "22.0.0",
     "html-webpack-plugin": "^5.6.0",
     "postcss-loader": "^8.1.1",
     "sass": "^1.77.2",
@@ -44,5 +56,21 @@
     "typescript": "^5.4.5",
     "webpack": "^5.91.0",
     "webpack-cli": "^5.1.4"
+  },
+  "config": {
+  "forge": {
+    "packagerConfig": {
+      "arch": "ia32",
+      "platform": "win32"
+    },
+    "makers": [
+      {
+        "name": "@electron-forge/maker-squirrel",
+        "config": {
+          "setupIcon": "./path/to/icon.ico"
+        }
+      }
+    ]
   }
+}
 }

@@ -3,22 +3,58 @@ import { CssVarsProvider } from '@mui/joy/styles';
 import CssBaseline from '@mui/joy/CssBaseline';
 import Box from '@mui/joy/Box';
 import Button from '@mui/joy/Button';
-import Breadcrumbs from '@mui/joy/Breadcrumbs';
-import Link from '@mui/joy/Link';
+
 import Typography from '@mui/joy/Typography';
 
-import HomeRoundedIcon from '@mui/icons-material/HomeRounded';
-import ChevronRightRoundedIcon from '@mui/icons-material/ChevronRightRounded';
+
 import DownloadRoundedIcon from '@mui/icons-material/DownloadRounded';
 
 import Sidebar from '../Sidebar';
 import OrderTable from './TableInventory';
 import Header from '../Header';
 import { useState } from 'react';
-import { Modal, DialogContent, DialogTitle, FormControl, FormLabel, Input, ModalDialog, Stack } from '@mui/joy';
+import { Modal, DialogTitle, FormLabel, Input, ModalDialog, Stack, Select, Option} from '@mui/joy';
+import { SubmitHandler, useForm } from 'react-hook-form';
+import { CategoryObject, ProductsMethods, ProductsObject } from '../../Database/Products';
+import { Autocomplete } from '@mui/material';
+
+type productsInput = {
+  id: number,
+  name: string,
+  price: number,
+  currency: number,
+  category: number
+}
+
+let categories: CategoryObject[], products: ProductsObject[] = null;
 
 export default function Inventory() {
   const [openCreateProduct, setProductCreation] = useState(false);
+  const [productStatus, setProductStatus] = useState(false);
+
+  React.useEffect(() => {
+    async function getData(){
+      const data = await ProductsMethods.getProductsAndCategories();
+      products = data.products;
+      categories = data.categories;
+      setProductStatus(true);
+    }
+    getData();
+  }, [])
+
+  const {
+    register,
+    handleSubmit,
+    formState: {errors}
+  } = useForm<productsInput>();
+
+  const onSubmitProduct: SubmitHandler<productsInput> = (data) => {
+    console.log(data)
+    ProductsMethods.addProduct(data.id, data.name, data.price, data.currency, 1)
+    // location.reload();
+  }
+  
+
 
   return (
     <CssVarsProvider disableTransitionOnChange>
@@ -27,7 +63,7 @@ export default function Inventory() {
       <Box sx={{ display: 'flex', minHeight: '100dvh' }}>
         <Header />
         <Sidebar />
-
+        
         <Box
           component="main"
           className="MainContent"
@@ -71,35 +107,54 @@ export default function Inventory() {
             </Button>
           </Box>
 
-          <Button onClick={() => setProductCreation(true)}>hola</Button>
+          <Button  onClick={() => setProductCreation(true)}>hola</Button>
 
-          <Modal open={openCreateProduct} onClose={() => setProductCreation(false)}>
+          
+
+          <OrderTable products={products} categories={categories} />
+        </Box>
+
+        <Modal open={openCreateProduct} onClose={() => setProductCreation(false)}>
         <ModalDialog>
-          <DialogTitle>Create new project</DialogTitle>
-          <DialogContent>Fill in the information of the project.</DialogContent>
+          <DialogTitle>Agregar producto</DialogTitle>
           <form
-            onSubmit={(event: React.FormEvent<HTMLFormElement>) => {
-              event.preventDefault();
-              setProductCreation(false);
-            }}
+            onSubmit={handleSubmit(onSubmitProduct)}
           >
             <Stack spacing={2}>
-              <FormControl>
-                <FormLabel>Name</FormLabel>
-                <Input autoFocus required />
-              </FormControl>
-              <FormControl>
-                <FormLabel>Description</FormLabel>
-                <Input required />
-              </FormControl>
+              <div>
+                <FormLabel>Código</FormLabel>
+                <Input {...register("id")}/>
+              </div>
+              <div>
+                <FormLabel>Nombre</FormLabel>
+                <Input {...register("name")}/>
+              </div>
+              <div>
+                <FormLabel>Precio</FormLabel>
+                <Stack direction={'row'} gap={3}>
+                  <Input {...register("price")}/>
+                  <Select {...register("currency")} placeholder="Moneda">
+                    <Option value={1}>$ - Dolar Americano</Option>
+                    <Option value={0}>Bs.D - Bolivar Digital</Option>
+                  </Select>
+                </Stack>
+              </div>
+              { categories ? (
+                <div>
+                <FormLabel>Categoria</FormLabel>
+                  <Select {...register("category")} placeholder="Categoria">
+                    {categories.map(e => (
+                      <Option value={e.id}>{e.name}</Option>
+                    ))}
+                  </Select>
+              </div>) : <div>si</div>
+              }
               <Button type="submit">Submit</Button>
             </Stack>
           </form>
         </ModalDialog>
-      </Modal>
 
-          <OrderTable />
-        </Box>
+    </Modal>
       </Box>
     </CssVarsProvider>
   );

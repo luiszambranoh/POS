@@ -59,13 +59,6 @@ ipcMain.handle('ask-query', async (event, query) => {
     return result;
   } catch (e) {
     console.log(e)
-    throw new Error('Error querying database');
+    throw new Error(e.message);
   }
-});
-
-const {getDolarAPI} = require("./dolar")
-
-ipcMain.handle('getDolar', async (event) => {
-  const tasa = await getDolarAPI();
-  return tasa
 });
