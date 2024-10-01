@@ -3,6 +3,7 @@ import { askQuery, updateQuery } from "./database";
 
 export interface ProductsObject {
   id: number;
+  quantity: number;
   name: string;
   price: number;
   currency: {
@@ -31,7 +32,7 @@ class Products {
 
   public addProduct(id: number,name: string, price: number, currency: number = 1, category: number = 1) {
     try{
-      updateQuery(`INSERT INTO products (id, name, price, currency, categoryID) VALUES (${id},"${name.toLowerCase()}", ${price}, ${currency}, ${category})`)
+      updateQuery(`INSERT INTO products (id, quantity, name, price, currency, categoryID) VALUES (${id},0,"${name.toLowerCase()}", ${price}, ${currency}, ${category})`)
     }
     catch(e){
       console.log(e.message);

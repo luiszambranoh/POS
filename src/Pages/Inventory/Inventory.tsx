@@ -112,6 +112,7 @@ export default function Inventory() {
           <Stack gap={5} direction={'row'}>
             <Button color='success' size='lg'  onClick={() => setProductCreation(true)}>Agregar Producto</Button>
             <Button color='success' size='lg'  onClick={() => setProductCreation(true)}>Agregar Categoria</Button>
+            <Button color='success' size='lg'  onClick={() => setProductCreation(true)}>Agregar Existencia</Button>
           </Stack>
 
           <OrderTable products={products} categories={categories} dolar={dolar} />

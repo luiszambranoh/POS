@@ -1,5 +1,6 @@
 CREATE TABLE IF NOT EXISTS products (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
+    quantity INTEGER,
     name TEXT,
     price INTEGER,
     currency INTEGER,
@@ -34,3 +35,6 @@ CREATE TABLE IF NOT EXISTS dolarPrice (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     price REAL
 );
+
+INSERT INTO category (name) VALUES ("generic");
+INSERT INTO dolarPrice (id) VALUES (1);

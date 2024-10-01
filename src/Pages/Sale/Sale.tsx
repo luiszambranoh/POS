@@ -1,66 +1,92 @@
-
-
+import * as React from 'react';
+import { CssVarsProvider } from '@mui/joy/styles';
+import CssBaseline from '@mui/joy/CssBaseline';
 import Box from '@mui/joy/Box';
 import Button from '@mui/joy/Button';
 
-
-import FormControl from '@mui/joy/FormControl';
-import FormLabel from '@mui/joy/FormLabel';
-
-import Input from '@mui/joy/Input';
-
-import Table from '@mui/joy/Table';
-import Sheet from '@mui/joy/Sheet';
-
 import Typography from '@mui/joy/Typography';
 
-import SearchIcon from '@mui/icons-material/Search';
 
+import DownloadRoundedIcon from '@mui/icons-material/DownloadRounded';
 
-import Autocomplete from '@mui/joy/Autocomplete';
+import Sidebar from '../Sidebar';
+import Header from '../Header';
+import { useState } from 'react';
+import { Modal, DialogTitle, FormLabel, Input, ModalDialog, Stack, Select, Option, Table, Sheet} from '@mui/joy';
+import { Controller, SubmitHandler, useForm } from 'react-hook-form';
 import { CategoryObject, ProductsMethods, ProductsObject } from '../../Database/Products';
-import React, { useState } from 'react';
-import { Modal, ModalDialog, Stack } from '@mui/joy';
-import { CurrencyMethods } from '../../Database/Currency';
-import { AttachMoney } from '@mui/icons-material';
-import { Icon } from '@mui/material';
+import { Autocomplete } from '@mui/material';
+import { formatInput, formatToTwoDecimals } from '../../Database/Utils';
 
-type Props = {
-  products: ProductsObject[],
-  categories: CategoryObject[],
-  dolar: number
+type selectedProduct = {
+  id: number,
+  productCopy: ProductsObject,
+  amount: number,
 }
 
+let categories: CategoryObject[], products: ProductsObject[] = null, dolar: number;
 
+export default function Sale() {
+  const [re, setRe] = useState(false);
+  const [selectedProducts, addProduct] = useState<selectedProduct[]>([]);
 
-export default function InventoryTable({products, dolar}: Props) {
-  const [openCreateProduct, setProductCreation] = useState(false);
+  React.useEffect(() => {
+    async function getData(){
+      const data = await ProductsMethods.getProductsAndCategories();
+      products = data.products;
+      categories = data.categories;
+      dolar = data.dolar;
+      setRe(true);
+    }
+    getData();
+  }, [])
+  
+
 
   return (
-    <React.Fragment>
-      
-      <Box
-        className="SearchAndFilters-tabletUp"
-        sx={{
-          borderRadius: 'sm',
-          py: 2,
-          display: { xs: 'none', sm: 'flex' },
-          flexWrap: 'wrap',
-          gap: 1.5,
-          '& > *': {
-            minWidth: { xs: '120px', md: '160px' },
-          },
-        }}
-      >
+    <CssVarsProvider disableTransitionOnChange>
+      <CssBaseline />
+      <Box sx={{ display: 'flex', minHeight: '100dvh' }}>
+        <Header />
+        <Sidebar />
+        
+        <Box
+          component="main"
+          className="MainContent"
+          sx={{
+            px: { xs: 2, md: 6 },
+            pt: {
+              xs: 'calc(12px + var(--Header-height))',
+              sm: 'calc(12px + var(--Header-height))',
+              md: 3,
+            },
+            pb: { xs: 2, sm: 2, md: 3 },
+            flex: 1,
+            display: 'flex',
+            flexDirection: 'column',
+            minWidth: 0,
+            height: '100dvh',
+            gap: 1,
+          }}
+        >
 
-        <FormControl sx={{ flex: 1 }} size="sm">
-          <FormLabel>Buscar Producto</FormLabel>
-          <Input size="lg" placeholder="Buscar producto" startDecorator={<SearchIcon />} />
-        </FormControl>
-      </Box>
-      {/* TABLE */}
+          <Box
+            sx={{
+              display: 'flex',
+              mb: 1,
+              gap: 1,
+              flexDirection: { xs: 'column', sm: 'row' },
+              alignItems: { xs: 'start', sm: 'center' },
+              flexWrap: 'wrap',
+              justifyContent: 'space-between',
+            }}
+          >
+            <Typography level="h2" component="h1">
+              Inventario
+            </Typography>
 
-      <Sheet
+          </Box>
+          <Sheet
         className="OrderTableContainer"
         variant="outlined"
         sx={{
@@ -90,48 +116,26 @@ export default function InventoryTable({products, dolar}: Props) {
             <tr>
               <th style={{ width: '20%', padding: '12px 6px' }}>Codigo</th>
               <th style={{ width: '20%', padding: '12px 6px' }}>Nombre</th>
-              <th style={{ width: '20%', padding: '12px 6px' }}>Precio Base</th>
-              <th style={{ width: '20%', padding: '12px 6px' }}>Precio Al Cambio</th>
+              <th style={{ width: '20%', padding: '12px 6px' }}>Precio Bs.D</th>
+              <th style={{ width: '20%', padding: '12px 6px' }}>Precio Dolares</th>
               <th style={{ width: "20%", padding: '12px 6px' }}>Acciones</th>
             </tr>
           </thead>
           <tbody>
-            {products ? products.map((products) => (
-              <tr key={products.id}>
-                <td>
-                  <Typography level="body-lg">{products.id}</Typography>
-                </td>
-                <td>
-                  <Typography level="body-lg">{products.name}</Typography>
-                </td>
-                <td>
-                {products.currency.name} {products.price} 
-                </td>
-                <td >
-                  {CurrencyMethods.convertCurrency(products.currency.id, dolar, products.price).convertionId == 1 ? <div><AttachMoney/> {CurrencyMethods.convertCurrency(products.currency.id, dolar, products.price).convertion} </div> : <div> Bs.D {CurrencyMethods.convertCurrency(products.currency.id, dolar, products.price).convertion} </div>
-                  } 
-                </td>
+            <tr>
+              <td>xd</td>
+              <td>xd</td>
+              <td>xd</td>
+              <td>xd</td>
+              <td>xd</td>
 
-                <td>
-                  <Stack direction={'row'} sx={{ display: 'flex', gap: 1 }}>
-                    <Button size="md"  onClick={() => {
-                        setProductCreation(true)
-                      }
-                    }>
-                      Modificar
-                    </Button>
-                  </Stack>
-                </td>
-              </tr>
-            )) : null}
+            </tr>
           </tbody>
         </Table>
       </Sheet>
 
-      
-
-      
-
-    </React.Fragment>
+        </Box>
+      </Box>
+    </CssVarsProvider>
   );
 }
