@@ -30,13 +30,14 @@ ipcMain.handle('update-query', async (event, query) => {
     await new Promise((resolve, reject) => {
       database.run(query, (err) => {
         if (err) {
+          console.log(`Query executed: ${query}`);
           reject(err);
         } else {
+          console.log(`Query executed: ${query}`);
           resolve(`Query executed: ${query}`);
         }
       });
     });
-    console.log(`Query executed: ${query}`);
     database.close();
   } catch (e) {
     console.log(e)

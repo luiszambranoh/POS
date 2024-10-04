@@ -24,6 +24,7 @@ import { Modal, ModalDialog, Stack } from '@mui/joy';
 import { CurrencyMethods } from '../../Database/Currency';
 import { AttachMoney } from '@mui/icons-material';
 import { Icon } from '@mui/material';
+import { units } from '../../Database/Utils';
 
 type Props = {
   products: ProductsObject[],
@@ -89,6 +90,7 @@ export default function InventoryTable({products, dolar}: Props) {
           <thead>
             <tr>
               <th style={{ width: '20%', padding: '12px 6px' }}>Codigo</th>
+              <th style={{ width: '20%', padding: '12px 6px' }}>Existencia</th>
               <th style={{ width: '20%', padding: '12px 6px' }}>Nombre</th>
               <th style={{ width: '20%', padding: '12px 6px' }}>Precio Base</th>
               <th style={{ width: '20%', padding: '12px 6px' }}>Precio Al Cambio</th>
@@ -100,6 +102,9 @@ export default function InventoryTable({products, dolar}: Props) {
               <tr key={products.id}>
                 <td>
                   <Typography level="body-lg">{products.id}</Typography>
+                </td>
+                <td>
+                  <Typography level="body-lg">{products.quantity} {units[products.unit]}</Typography>
                 </td>
                 <td>
                   <Typography level="body-lg">{products.name}</Typography>

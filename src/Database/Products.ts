@@ -1,11 +1,12 @@
 import { CurrencyMethods } from "./Currency";
-import { askQuery, updateQuery } from "./database";
+import { askQuery, updateQuery } from "./Database";
 
 export interface ProductsObject {
   id: number;
   quantity: number;
   name: string;
   price: number;
+  unit: number;
   currency: {
     id: number;
     name: string;
@@ -30,24 +31,29 @@ interface CategoriesAndProducts{
 
 class Products {
 
-  public addProduct(id: number,name: string, price: number, currency: number = 1, category: number = 1) {
+  public addProduct(id: number, quantity: number,name: string, price: number, currency: number = 1, category: number, unit: number) {
     try{
-      updateQuery(`INSERT INTO products (id, quantity, name, price, currency, categoryID) VALUES (${id},0,"${name.toLowerCase()}", ${price}, ${currency}, ${category})`)
+      updateQuery(`
+        INSERT INTO products (id, quantity, name, unit, price, currency, categoryID) VALUES (${id}, ${quantity}, "${name}", ${unit}, ${price}, ${currency}, ${category})`
+      )
+      console.log("xd")
     }
     catch(e){
-      console.log(e.message);
+      throw new Error(e)
     }
   }
 
   public addCategory(name: string) {
-    updateQuery(`INSERT INTO category (name) VALUES ("${name.toLowerCase()}")`)
+    updateQuery(`INSERT INTO category (name) VALUES ("${name}")`)
   }
   
   public async getProducts(): Promise<ProductsObject[]> {
     const data = await askQuery(`
       SELECT 
-        products.id, 
-        products.name, 
+        products.id,
+        products.quantity,
+        products.name,
+        products.unit,
         products.price, 
         products.currency AS currencyId, 
         CASE 
@@ -67,8 +73,10 @@ class Products {
 
     let re: ProductsObject[] = data.map(product => ({
       id: product.id,
+      quantity: product.quantity,
       name: product.name,
       price: product.price,
+      unit: product.unit,
       currency: {
         id: product.currencyId,
         name: product.currencyName
@@ -99,6 +107,15 @@ class Products {
 
     return {products, categories, dolar}
   }
+
+  public findProductById(products: ProductsObject[], id: number){
+    return products.find(product => product.id === id);
+  }
+
+  // Assuming ProductsObject has a property 'name'
+  public findProductByName = (products: ProductsObject[], name: string): ProductsObject | undefined => {
+    return products.find(product => product.name.toLowerCase() === name.toLowerCase());
+  };
 }
 
 export const ProductsMethods = new Products();

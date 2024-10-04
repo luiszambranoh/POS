@@ -17,22 +17,36 @@ import { Modal, DialogTitle, FormLabel, Input, ModalDialog, Stack, Select, Optio
 import { Controller, SubmitHandler, useForm } from 'react-hook-form';
 import { CategoryObject, ProductsMethods, ProductsObject } from '../../Database/Products';
 import { Autocomplete } from '@mui/material';
-import { formatInput, formatToTwoDecimals } from '../../Database/Utils';
+import { formatInput, formatToTwoDecimals, units } from '../../Database/Utils';
+import useSnackbar from '../hook/Error';
 
 type productsInput = {
   id: number,
+  quantity: number,
   name: string,
   price: string,
   currency: number,
-  category: number
+  category: number,
+  unit: number
+}
+
+type categoryInput = {
+  name: string
 }
 
 let categories: CategoryObject[], products: ProductsObject[] = null, dolar: number;
 
 export default function Inventory() {
-  const [openCreateProduct, setProductCreation] = useState(false);
-  const [productPrice, setProductPrice] = useState<string>('0.00');
+  const {SnackbarComponent, showSnackbar} = useSnackbar();
   const [re, setRe] = useState(false);
+
+  const [openCreateProduct, setProductCreation] = useState(false);
+  const [openCreateCategory, setCategoryCreation] = useState(false);
+  const {register,handleSubmit,control} = useForm<productsInput>();
+  const categoryNameRef = React.useRef<HTMLInputElement>();
+
+  const [productPrice, setProductPrice] = useState<string>('0.00');
+  
 
 
   React.useEffect(() => {
@@ -45,24 +59,11 @@ export default function Inventory() {
     }
     getData();
   }, [])
-  
-  const {
-    register,
-    handleSubmit,
-    control
-  } = useForm<productsInput>();
-
-  const onSubmitProduct: SubmitHandler<productsInput> = (data) => {
-    
-    ProductsMethods.addProduct(data.id, data.name.toLocaleLowerCase(), formatToTwoDecimals(data.price), data.currency, 1)
-    location.reload();
-  }
-  
-
 
   return (
     <CssVarsProvider disableTransitionOnChange>
       <CssBaseline />
+      {SnackbarComponent()}
       <Box sx={{ display: 'flex', minHeight: '100dvh' }}>
         <Header />
         <Sidebar />
@@ -111,8 +112,12 @@ export default function Inventory() {
           </Box>
           <Stack gap={5} direction={'row'}>
             <Button color='success' size='lg'  onClick={() => setProductCreation(true)}>Agregar Producto</Button>
-            <Button color='success' size='lg'  onClick={() => setProductCreation(true)}>Agregar Categoria</Button>
-            <Button color='success' size='lg'  onClick={() => setProductCreation(true)}>Agregar Existencia</Button>
+            <Button color='success' size='lg'  onClick={() => setCategoryCreation(true)}>Agregar Categoria</Button>
+            
+          </Stack>
+          <Stack gap={5} direction={'row'}>
+            <Button size='lg'  onClick={() => setProductCreation(true)}>Nuevo Importe</Button>
+            <Button size='lg'  onClick={() => setCategoryCreation(true)}>Agregar proveedor</Button>
           </Stack>
 
           <OrderTable products={products} categories={categories} dolar={dolar} />
@@ -122,16 +127,28 @@ export default function Inventory() {
         <ModalDialog>
           <DialogTitle>Agregar producto</DialogTitle>
           <form
-            onSubmit={handleSubmit(onSubmitProduct)}
+            onSubmit={handleSubmit((data) => {
+              try {
+                ProductsMethods.addProduct(data.id, data.quantity,data.name, formatToTwoDecimals(data.price), data.currency, data.category, data.unit)
+                location.reload();
+              }
+              catch(e){
+                showSnackbar("Error", "xd")
+              }
+            })}
           >
             <Stack spacing={2}>
               <div>
                 <FormLabel>Código</FormLabel>
-                <Input {...register("id")}/>
+                <Input {...register("id")} required/>
+              </div>
+              <div>
+                <FormLabel>Cantidad</FormLabel>
+                <Input {...register("quantity")} type='number' required/>
               </div>
               <div>
                 <FormLabel>Nombre</FormLabel>
-                <Input {...register("name")}/>
+                <Input {...register("name")} required/>
               </div>
               <div>
                 <FormLabel>Precio</FormLabel>
@@ -139,7 +156,6 @@ export default function Inventory() {
                 <Controller
           name="price"
           control={control}
-          defaultValue={'0.00'}
           render={({ field }) => (
             <Input
               {...field}
@@ -152,7 +168,7 @@ export default function Inventory() {
             />
           )}
         />
-                  <Select {...register("currency")} placeholder="Moneda">
+                  <Select {...register("currency")} required defaultListboxOpen>
                     <Option value={1}>$ - Dolar Americano</Option>
                     <Option value={0}>Bs.D - Bolivar Digital</Option>
                   </Select>
@@ -161,10 +177,20 @@ export default function Inventory() {
               { categories ? (
                 <div>
                 <FormLabel>Categoria</FormLabel>
-                  <Select {...register("category")} placeholder="Categoria">
+                  <Select {...register("category")} placeholder="Categoria" required>
                     {categories.map(e => (
-                      <Option value={e.id}>{e.name}</Option>
+                      <Option key={e.id} value={e.id}>{e.name}</Option>
                     ))}
+                  </Select>
+              </div>) : <div>si</div>
+              }
+              { units ? (
+                <div>
+                <FormLabel>Unidad</FormLabel>
+                  <Select {...register("unit")} placeholder="Unidad" required>
+                    <Option value={1}>{units[1]}</Option>
+                    <Option value={2}>{units[2]}</Option>
+                    <Option value={3}>{units[3]}</Option>
                   </Select>
               </div>) : <div>si</div>
               }
@@ -172,7 +198,29 @@ export default function Inventory() {
             </Stack>
           </form>
         </ModalDialog>
-    </Modal>
+        </Modal>
+
+        <Modal open={openCreateCategory} onClose={() => setCategoryCreation(false)}>
+        <ModalDialog>
+          <DialogTitle>Agregar Categoria</DialogTitle>
+          <form
+            onSubmit={(e) => {
+              e.preventDefault();
+              let input: string = categoryNameRef.current.value;
+              ProductsMethods.addCategory("sisa")
+              location.reload()
+            }}
+          >
+            <Stack spacing={2}>
+              <div>
+                <FormLabel>Nombre</FormLabel>
+                <Input ref={categoryNameRef} required/>
+              </div>
+              <Button type='submit' color='success'>Agregar Categoria</Button>
+            </Stack>
+          </form>
+        </ModalDialog>
+        </Modal>
 
       </Box>
     </CssVarsProvider>

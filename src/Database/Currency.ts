@@ -1,4 +1,5 @@
-import { askQuery, updateQuery } from "./database";
+import { askQuery, updateQuery } from "./Database";
+import { formatToTwoDecimals } from "./Utils";
 
 
 class Currency {
@@ -27,7 +28,7 @@ class Currency {
       // Convert to Boliars
       let result = {
         convertionId: 0,
-        convertion: (amount * currencyPrice)
+        convertion: formatToTwoDecimals(amount * currencyPrice)
         }
       return result
     }
@@ -35,7 +36,7 @@ class Currency {
       // Convert to $
       let result = {
         convertionId: 1,
-        convertion: (amount / currencyPrice)
+        convertion: formatToTwoDecimals(amount / currencyPrice)
         }
       return result
     }

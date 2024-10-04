@@ -2,6 +2,7 @@ CREATE TABLE IF NOT EXISTS products (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     quantity INTEGER,
     name TEXT,
+    unit INTEGER,
     price INTEGER,
     currency INTEGER,
     categoryID INTEGER,
@@ -37,4 +38,3 @@ CREATE TABLE IF NOT EXISTS dolarPrice (
 );
 
 INSERT INTO category (name) VALUES ("generic");
-INSERT INTO dolarPrice (id) VALUES (1);

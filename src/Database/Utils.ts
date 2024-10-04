@@ -1,3 +1,9 @@
+export let units = {
+  1: "U",
+  2: "Kg",
+  3: "L"
+}
+
 export function formatInput(value: string): string {
   // Remove any non-digit characters
   let cleanValue = value.replace(/[^0-9]/g, '');
