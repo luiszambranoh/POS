@@ -4,6 +4,12 @@ export let units = {
   3: "L"
 }
 
+export let paymentMethods = {
+  1: "Efectivo",
+  2: "Punto de venta",
+  3: "Transferencia"
+}
+
 export function formatInput(value: string): string {
   // Remove any non-digit characters
   let cleanValue = value.replace(/[^0-9]/g, '');
@@ -39,3 +45,18 @@ export function formatToTwoDecimals(value: string | number): number {
   // Otherwise, return the number with two decimals
   return num;
 }
+
+export const getDate = () => {
+  const venezuelaTime = new Date().toLocaleString("es-VE", {
+    timeZone: "America/Caracas",
+    year: "2-digit",
+    month: "2-digit",
+    day: "2-digit",
+    hour: "2-digit",
+    minute: "2-digit",
+    second: "2-digit",
+    hour12: false
+  });
+
+  return venezuelaTime.replace(",", " -");
+};

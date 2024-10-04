@@ -23,12 +23,12 @@ class Currency {
     return dolar
   }
 
-  public convertCurrency(currency: number, currencyPrice: number, amount: number){
+  public convertCurrency(currency: number, dolarPrice: number, amount: number){
     if (currency == 1) {
       // Convert to Boliars
       let result = {
         convertionId: 0,
-        convertion: formatToTwoDecimals(amount * currencyPrice)
+        convertion: formatToTwoDecimals(amount * dolarPrice)
         }
       return result
     }
@@ -36,7 +36,7 @@ class Currency {
       // Convert to $
       let result = {
         convertionId: 1,
-        convertion: formatToTwoDecimals(amount / currencyPrice)
+        convertion: formatToTwoDecimals(amount / dolarPrice)
         }
       return result
     }

@@ -3,7 +3,7 @@ CREATE TABLE IF NOT EXISTS products (
     quantity INTEGER,
     name TEXT,
     unit INTEGER,
-    price INTEGER,
+    price REAL,
     currency INTEGER,
     categoryID INTEGER,
     active INTEGER DEFAULT 1,
@@ -12,11 +12,10 @@ CREATE TABLE IF NOT EXISTS products (
 
 CREATE TABLE IF NOT EXISTS sales (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
-    date DATETIME,
+    date TEXT,
     paymentMethod TEXT,
-    currency INTEGER,
-    dolarPrice FLOAT,
-    total INTEGER
+    dolar REAL,
+    totalDolar REAL
 );
 
 CREATE TABLE IF NOT EXISTS productSold (
@@ -34,7 +33,7 @@ CREATE TABLE IF NOT EXISTS category (
 
 CREATE TABLE IF NOT EXISTS dolarPrice (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
-    price REAL
+    price FLOAT
 );
 
 INSERT INTO category (name) VALUES ("generic");

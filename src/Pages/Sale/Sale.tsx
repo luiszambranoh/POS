@@ -15,17 +15,24 @@ import { useState } from 'react';
 import { Modal, DialogTitle, Input, ModalDialog, Stack, Select, Option, Table, Sheet, InputProps, Divider, FormLabel, Autocomplete} from '@mui/joy';
 import { Controller, SubmitHandler, useForm } from 'react-hook-form';
 import { CategoryObject, ProductsMethods, ProductsObject } from '../../Database/Products';
-import { formatInput, formatToTwoDecimals, units } from '../../Database/Utils';
-import { Delete, SearchOutlined } from '@mui/icons-material';
+import { formatInput, formatToTwoDecimals, getDate, paymentMethods, units } from '../../Database/Utils';
+import { Delete, Done, SearchOutlined } from '@mui/icons-material';
 import useSnackbar from '../hook/Error';
+import { CurrencyMethods } from '../../Database/Currency';
+import { SaleMethods, selectedProduct } from '../../Database/Sales';
 
-type selectedProduct = {
-  id: number,
-  product: ProductsObject,
-  amount: number,
-}
+
 
 let categories: CategoryObject[], products: ProductsObject[] = [], dolar: number;
+
+let amountPayed = {
+  // 1: "Efectivo",
+  // 2: "Punto de venta",
+  // 3: "Transferencia"
+  1: 0.0,
+  2: 0.0,
+  3: 0.0
+}
 
 export default function Sale() {
   const { showSnackbar, SnackbarComponent } = useSnackbar();
@@ -36,6 +43,11 @@ export default function Sale() {
   // FIND PRODUCT BY ID
   const [productIdInput, setProductIdInput] = useState('');
   const [finishSale, setFinishSale] = useState(false);
+  const [totalAmountPayed, setTotalAmountPayed] = useState<number>(0);
+
+  const {register: rPayment, handleSubmit: hPayment, control: cPayment} = useForm<{paymentAmount: number, currency: number, paymentMethod: number}>();
+  const [paymentInputValue, setPaymentInputValue] = useState('');
+  const [drawback, setDrawback] = useState(0);
 
 
   React.useEffect(() => {
@@ -77,14 +89,38 @@ export default function Sale() {
     );
   }
 
+  function calculateTotalBs() {
+    return selectedProducts.reduce((acc, product) => {
+      const productTotal = product.product.currency.id === 0 
+        ? product.amount * product.product.price
+        : product.amount * product.product.price * dolar;
+      return formatToTwoDecimals(acc + productTotal);
+    }, 0);
+  }
+
+  function calculateTotalDollars() {
+    return selectedProducts.reduce((acc, product) => {
+      const productTotal = product.product.currency.id === 1 
+        ? product.amount * product.product.price
+        : product.amount * (product.product.price / dolar);
+      return formatToTwoDecimals(acc + productTotal);
+    }, 0);
+  }
+
   function performSale(){
-    if (selectedProducts.length == 0){
-      showSnackbar("Seleciona Products", '');
-      return
+    if (selectedProducts.length <= 0){
+      showSnackbar("No hay products", "Seleciona productos para poder completar la venta");
+    }
+    else if (calculateTotalDollars() != totalAmountPayed){
+      showSnackbar("Falta Dinero", "Revisa el abono hecho por el cliente o el vuelto.")
     }
 
+    let xd = [selectedProducts, amountPayed, getDate()]
+
+    SaleMethods.addSale(selectedProducts, dolar, calculateTotalDollars(), amountPayed);
+
+
   }
-  
 
   return (
     <CssVarsProvider disableTransitionOnChange>
@@ -109,8 +145,8 @@ export default function Sale() {
             display: 'flex',
             flexDirection: 'column',
             minWidth: 0,
-            height: '100dvh',
             gap: 1,
+            alignItems: 'center'
           }}
         >
 
@@ -123,6 +159,7 @@ export default function Sale() {
               alignItems: { xs: 'start', sm: 'center' },
               flexWrap: 'wrap',
               justifyContent: 'space-between',
+              alignContent: 'center'
             }}
           >
             <Typography level="h2" component="h1">
@@ -182,20 +219,13 @@ export default function Sale() {
           </Stack>
           <Divider></Divider>
           
-          <Button color='success' onClick={() => {
-            if (selectedProducts.length == 0){
-              showSnackbar("No tienes productos selecionados", "")
-              return
-            }
-            setFinishSale(true);
-          }}></Button>
+          <Button  color='success' sx={{width: 250}} onClick={performSale}><Done/>    Completar Venta</Button>
 
           <Sheet
         className="OrderTableContainer"
         variant="outlined"
         sx={{
           display: { xs: 'none', sm: 'initial' },
-          width: '100%',
           borderRadius: 'sm',
           flexShrink: 1,
           overflow: 'auto',
@@ -279,23 +309,11 @@ export default function Sale() {
               <td>Total:</td>
               {/* BOLIVAR */}
               <td>
-                {selectedProducts.reduce((acc, product) => {
-                  const productTotal = product.product.currency.id === 0 
-                    ? formatToTwoDecimals(product.amount * product.product.price)
-                    : formatToTwoDecimals(product.amount * product.product.price * dolar);
-                  return acc + productTotal;
-                }, 0)} Bs
+                {calculateTotalBs()} Bs
               </td>
               {/* DOLAR */}
               <td>
-                {(
-                  selectedProducts.reduce((acc, product) => {
-                    const productTotal = product.product.currency.id === 1 
-                      ? product.amount * product.product.price
-                      : product.amount * (product.product.price / dolar);
-                    return acc + productTotal;
-                  }, 0)
-                )} $
+                {calculateTotalDollars()} $
               </td>
             </tr>
           </tfoot>
@@ -309,10 +327,8 @@ export default function Sale() {
         variant="outlined"
         sx={{
           display: { xs: 'none', sm: 'initial' },
-          width: '100%',
           borderRadius: 'sm',
           flexShrink: 1,
-          overflow: 'auto',
           minHeight: 0,
           marginTop: 5
         }}
@@ -331,37 +347,76 @@ export default function Sale() {
           }}
           size="lg"
         >
+
           <thead>
             <tr>
-              <th style={{ width: '8%', padding: '12px 6px' }}>Total Bs.</th>
-              <th style={{ width: '10%', padding: '12px 6px' }}>Total $</th>
-              <th style={{ width: '20%', padding: '12px 6px' }}>Abono</th>
-              <th style={{ width: '20%', padding: '12px 6px' }}>Vuelto</th>
-            </tr>
+            <th style={{ width: '5%', padding: '12px 6px' }}></th>
+              <th style={{ width: '20%', padding: '12px 6px' }}> Abono</th>
+              <th style={{ width: '15%', padding: '12px 6px' }}>Efectivo </th>
+              <th style={{ width: '15%', padding: '12px 6px' }}>Punto de venta</th>
+              <th style={{ width: '15%', padding: '12px 6px' }}>Transferencia</th>
+              <th style={{ width: '15%', padding: '12px 6px' }}>Falta por pagar</th>
+              <th style={{ width: '15%', padding: '12px 6px' }}>Vuelto</th>
+            </tr> 
           </thead>
           <tbody>
             <tr>
-            {/* BOLIVAR */}
-            <td>
-                {selectedProducts.reduce((acc, product) => {
-                  const productTotal = product.product.currency.id === 0 
-                    ? formatToTwoDecimals(product.amount * product.product.price)
-                    : formatToTwoDecimals(product.amount * product.product.price * dolar);
-                  return acc + productTotal;
-                }, 0)} Bs
-              </td>
-              {/* DOLAR */}
+              <td>$</td>
+              
               <td>
-                {(
-                  selectedProducts.reduce((acc, product) => {
-                    const productTotal = product.product.currency.id === 1 
-                      ? product.amount * product.product.price
-                      : product.amount * (product.product.price / dolar);
-                    return acc + productTotal;
-                  }, 0)
-                )} $
+                {amountPayed ? 
+                totalAmountPayed + " $"
+              : null} 
               </td>
-              <td></td>
+
+              <td>{amountPayed[1]} $ </td>
+              <td>{amountPayed[2]} $ </td>
+              <td>{amountPayed[3]} $ </td>
+
+              
+              <td>
+                {totalAmountPayed < calculateTotalDollars() ? 
+                (formatToTwoDecimals(calculateTotalDollars() - totalAmountPayed)) + " $"
+              : null} 
+              </td>
+              <td>
+                {totalAmountPayed > calculateTotalDollars() ? 
+                (formatToTwoDecimals(totalAmountPayed - calculateTotalDollars())) + " $"
+              : null} 
+              </td>
+            </tr>
+            <tr>
+              <td>Bs.</td>
+              <td>
+                {amountPayed ? 
+                CurrencyMethods.convertCurrency(1, dolar, totalAmountPayed).convertion + " Bs."
+              : null} 
+              </td>
+
+              <td>{CurrencyMethods.convertCurrency(1, dolar, amountPayed[1]).convertion} Bs. </td>
+              <td>{CurrencyMethods.convertCurrency(1, dolar, amountPayed[2]).convertion} Bs. </td>
+              <td>{CurrencyMethods.convertCurrency(1, dolar, amountPayed[3]).convertion} Bs. </td>
+
+              <td>
+                {CurrencyMethods.convertCurrency(1, dolar, totalAmountPayed).convertion < calculateTotalBs() ? 
+                  (formatToTwoDecimals(calculateTotalBs() - CurrencyMethods.convertCurrency(1, dolar, totalAmountPayed).convertion)) + " Bs."
+                : null}
+              </td>
+              <td>
+                {CurrencyMethods.convertCurrency(1, dolar, totalAmountPayed).convertion > calculateTotalBs() ? 
+                (formatToTwoDecimals(CurrencyMethods.convertCurrency(1, dolar, totalAmountPayed).convertion - calculateTotalBs())) + " Bs."
+              : null} 
+              </td>
+
+              
+
+            </tr>
+            <tr>
+              <td colSpan={2}></td>
+              <td><Button sx={{marginLeft: 2}} color='danger'  size='sm' onClick={() => {amountPayed[1] = 0; setTotalAmountPayed(amountPayed[1] + amountPayed[2] + amountPayed[3]);}}><Delete/></Button></td>
+              <td><Button sx={{marginLeft: 2}} color='danger'  size='sm' onClick={() => {amountPayed[2] = 0; setTotalAmountPayed(amountPayed[1] + amountPayed[2] + amountPayed[3]);}}><Delete/></Button></td>
+              <td><Button sx={{marginLeft: 2}} color='danger'  size='sm' onClick={() => {amountPayed[3] = 0; setTotalAmountPayed(amountPayed[1] + amountPayed[2] + amountPayed[3]);}}><Delete/></Button></td>
+              <td colSpan={2}></td>
             </tr>
           </tbody>
         </Table>
@@ -374,26 +429,56 @@ export default function Sale() {
             marginTop: 3
           }}
           >
+          <form onSubmit={hPayment((data, e) => {
+            e.preventDefault();
+            let money: number;
+            if (data.currency == 0){
+              money = CurrencyMethods.convertCurrency(0, dolar, data.paymentAmount).convertion;
+            }
+            else {
+              money = data.paymentAmount
+            }
+            amountPayed[data.paymentMethod] += formatToTwoDecimals(money);
+            console.log(amountPayed)
+            console.log(amountPayed[1] + amountPayed[2] + amountPayed[3])
+            setTotalAmountPayed(amountPayed[1] + amountPayed[2] + amountPayed[3]);
+          })}>
           <Stack direction={'row'} gap={5}>
-              <div>
-                <FormLabel>Monto Abonado</FormLabel>
-                <Input type="number"></Input>
-              </div>
+              <Controller
+                name="paymentAmount"
+                control={cPayment}
+                render={({ field }) => (
+                  <Input
+                    {...field}
+                    value={paymentInputValue} // Set the value to your productPrice state
+                    onChange={(value) => {
+                      let input = formatInput(value.target.value)
+                      setPaymentInputValue(input); // Update the local state
+                      field.onChange(input); // Notify React Hook Form about the change
+                    }}
+                  />
+                )}
+              />
               <div>
               <FormLabel>Moneda</FormLabel>
-                <Select required>
+                <Select {...rPayment("currency")} required>
                   <Option value={1}>$ - Dolar Americano</Option>
                   <Option value={0}>Bs.D - Bolivar Digital</Option>
                 </Select>
               </div>
               <Box>
                 <FormLabel>Método de pago</FormLabel>
-                <Select required>
-                  <Option value={1}>$ - Dolar Americano</Option>
-                  <Option value={2}>Bs.D - Bolivar Digital</Option>
+                <Select {...rPayment("paymentMethod")} required>
+                  <Option value={1}>{paymentMethods[1]}</Option>
+                  <Option value={2}>{paymentMethods[2]}</Option>
+                  <Option value={3}>{paymentMethods[3]}</Option>
                 </Select>
               </Box>
+              <Button type='submit'>Abonar</Button>
           </Stack>
+          </form>
+          
+
           </Box>
         </Box>
       </Box>
