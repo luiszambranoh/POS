@@ -37,63 +37,44 @@ export type selectedProduct = {
 
 class Sale {
 
- public async addSale(soldProducts: selectedProduct[], dolar: number, totalDolar: number, paymentMethods: {1: number, 2: number, 3: number}) {
-    console.log(`INSERT INTO sales (date, paymentMethod, dolar, totalDolar) VALUES ("${getDate()}", "${JSON.stringify(paymentMethods)}", ${dolar}, ${totalDolar})`);
+  public async addSale(soldProducts: selectedProduct[], dolar: number, totalDolar: number, paymentMethods: {1: number, 2: number, 3: number}) {
+    let paymentMethodStr = JSON.stringify(paymentMethods).replace(/"/g, '""');
+    const productsSoldArray = soldProducts.map(p => ({
+      [p.product.id]: p.amount
+  }));
+    let productsSoldStr = JSON.stringify(productsSoldArray).replace(/"/g, '""');
 
     try{
-      let a = await askQuery(`
-          INSERT INTO sales (date, paymentMethod, dolar, totalDolar) VALUES ("${getDate()}", "${JSON.stringify(paymentMethods)}", ${dolar}, ${totalDolar})
+      updateQuery(`
+          INSERT INTO sales (date, paymentMethod, dolar, productsSold, totalDolar) VALUES 
+          (${getDate()}, "${paymentMethodStr}", ${dolar}, "${productsSoldStr}", ${totalDolar})
         `
       )
-      console.log(a);
+      let lastSale = await this.getLastSale();
+
+      soldProducts.forEach(p => {
+        updateQuery(`
+            INSERT INTO productSold (saleID, productID, amount) VALUES (${lastSale}, ${p.product.id}, ${p.amount})
+          `);
+        updateQuery(`
+            UPDATE products
+            SET quantity = quantity - ${p.amount}
+            WHERE id = ${p.product.id}
+          `)
+      }) 
     }
     catch(e){
       throw new Error(e)
     }
   }
   
-  public async getProducts(): Promise<ProductsObject[]> {
-    const data = await askQuery(`
-      SELECT 
-        products.id,
-        products.quantity,
-        products.name,
-        products.unit,
-        products.price, 
-        products.currency AS currencyId, 
-        CASE 
-          WHEN products.currency = 1 THEN '$'
-          ELSE 'Bs.'
-        END AS currencyName, 
-        category.id AS categoryId,
-        category.name AS categoryName
-      FROM 
-        products
-      INNER JOIN 
-        category ON products.categoryID = category.id
-      WHERE 
-        products.active = 1;
-    `);
+  public async getLastSale(): Promise<number> {
+    const selectQuery = await askQuery(`SELECT * FROM sales ORDER BY id DESC LIMIT 1`);
+    let x = selectQuery[0].id
+    console.log(selectQuery);
+    console.log(x);
     
-
-    let re: ProductsObject[] = data.map(product => ({
-      id: product.id,
-      quantity: product.quantity,
-      name: product.name,
-      price: product.price,
-      unit: product.unit,
-      currency: {
-        id: product.currencyId,
-        name: product.currencyName
-      },
-      category: {
-        id: product.categoryId,
-        name: product.categoryName
-      }
-    }))
-
-    return re;
-
+    return x
   }
 }
 

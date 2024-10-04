@@ -115,11 +115,8 @@ export default function Sale() {
       showSnackbar("Falta Dinero", "Revisa el abono hecho por el cliente o el vuelto.")
     }
 
-    let xd = [selectedProducts, amountPayed, getDate()]
-
     SaleMethods.addSale(selectedProducts, dolar, calculateTotalDollars(), amountPayed);
-
-
+    location.reload();
   }
 
   return (

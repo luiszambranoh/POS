@@ -53,6 +53,7 @@ ipcMain.handle('ask-query', async (event, query) => {
         if (err) {
           reject(err);
         } else {
+          console.log(rows);
           resolve(rows);
         }
       });

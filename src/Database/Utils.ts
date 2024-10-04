@@ -49,14 +49,18 @@ export function formatToTwoDecimals(value: string | number): number {
 export const getDate = () => {
   const venezuelaTime = new Date().toLocaleString("es-VE", {
     timeZone: "America/Caracas",
-    year: "2-digit",
+    year: "numeric",
     month: "2-digit",
     day: "2-digit",
     hour: "2-digit",
     minute: "2-digit",
     second: "2-digit",
-    hour12: false
+    hour12: false,
   });
 
-  return venezuelaTime.replace(",", " -");
+  const [date, time] = venezuelaTime.split(" - ");
+  const [day, month, year] = date.split("/");
+  const formattedDate = `${year}-${month}-${day} ${time}`; // Format: YYYY-MM-DD HH:mm:ss
+
+  return formattedDate; // Returns the date in ISO8601 format
 };
